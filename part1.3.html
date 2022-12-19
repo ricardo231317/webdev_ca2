@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <title>Title</title>
+  <!-- Required meta tags -->
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+  <!-- Bootstrap CSS v5.2.1 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.1/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-iYQeCzEYFbKjA/T2uDLTpkwGzCiq6soy8tYaI1GyVh/UjpbCx/TYkiZhlZB6+fzT" crossorigin="anonymous">
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/0.3.2/js/sql.js"></script> -->
+    <script src="/sql.js"></script>
+    <!-- <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.2.2/dist/worker.sql-wasm.js"></script> -->
+
+</head>
+<nav class="navbar navbar-dark bg-primary navbar-expand-lg">
+  <div class="container-fluid">
+    <a class="navbar-brand h5">Part1.3</a>
+        <li class="d-flex nav-item dropdown me-5">
+          <a class="nav-link link-light dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            Pages
+          </a>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="part1.1.html">Part1.1</a></li>
+            <li><a class="dropdown-item" href="part1.2.html">Part1.2</a></li>
+          </ul>
+        </li>
+    </div>
+  </div>
+</nav>
+<body>
+  <main>
+    <div class="container">
+        
+        <h1>Part 1.3</h1>
+        <h5>SQL: SELECT employees.emp_id as num_empGender, employees.gender, 
+          departments.dept_name
+          FROM dept_manager
+          INNER JOIN employees
+          on employees.emp_id = dept_manager.emp_id
+          INNER JOIN departments
+          ON departments.dept_id = dept_manager.dept_id
+          ORDER by num_empGender ASC</h5> <button class="btn btn-success" onclick="query1()">Execute</button>
+        <div id="res"></div>
+        <br>
+        <h5>SQL:  SELECT AVG(salary) as avg_salary, employees.gender
+          FROM salaries
+          INNER JOIN employees
+          ON employees.emp_id = salaries.emp_id
+          INNER JOIN titles
+          ON titles.emp_id = employees.emp_id
+          WHERE employees.gender = 'M' AND titles.title = 'Technique Leader'
+          UNION ALL
+          SELECT AVG(salary) as avg_salary, employees.gender
+          FROM salaries
+          INNER JOIN employees
+          ON employees.emp_id = salaries.emp_id
+          INNER JOIN titles
+          ON titles.emp_id = employees.emp_id
+          WHERE employees.gender = 'F' AND titles.title = 'Technique Leader'</h5> <button class="btn btn-success" onclick="query2()">Execute</button>
+        <div id="res2"></div>
+        <hr>
+        <h5>SQL: SELECT COUNT(emp_id)
+          FROM salaries
+          WHERE to_date = '9999-01-01' AND salary >= 90000 and salary <= 90040</h5><button class="btn btn-success" onclick="query3()">Execute</button>
+        <div id="res3"></div>
+        <hr>
+        <h5>SQL:  SELECT employees.last_name, employees.first_name, salaries.salary
+          FROM employees
+          INNER JOIN salaries
+          on employees.emp_id = salaries.emp_id
+          WHERE salaries.to_date = '9999-01-01' AND salaries.salary >= 90000
+          GROUP BY employees.last_name, employees.first_name, salaries.salary
+          ORDER BY employees.last_name DESC, employees.first_name DESC</h5><button class="btn btn-success" onclick="query4()">Execute</button>
+        <div id="res4"></div>
+        <hr>
+        <h5>SQL:  SELECT employees.last_name, employees.first_name, salaries.from_date,
+          salaries.to_date ,salaries.salary
+          FROM employees
+          INNER JOIN salaries
+          on employees.emp_id = salaries.emp_id
+          WHERE employees.emp_id = 10012</h5><button class="btn btn-success" onclick="query5()">Execute</button>
+        <div id="res5"></div>
+    </div>
+    
+    <script>
+        var dbFileElm = document.getElementById('dbfile');
+        var worker = new Worker("../../dist/worker.sql-wasm1.js");
+        
+        
+        function query1() {
+            const xhr = new XMLHttpRequest();xhr.open('GET', '/employees.db', true);
+            xhr.responseType = 'arraybuffer';
+        xhr.onload = e => {
+          const uInt8Array = new Uint8Array(xhr.response);
+          const db = new SQL.Database(uInt8Array);
+            const contents1 = db.exec("SELECT * FROM departments");
+            createTable(contents1[0], 'res')
+        };
+        xhr.send();
+        }
+        
+        function query2() {
+            const xhr = new XMLHttpRequest();xhr.open('GET', '/employees.db', true);
+            xhr.responseType = 'arraybuffer';
+            xhr.onload = e => {
+            const uInt8Array = new Uint8Array(xhr.response);
+            const db = new SQL.Database(uInt8Array);
+                const contents2 = db.exec(`SELECT AVG(salary) as avg_salary, employees.gender
+        FROM salaries
+        INNER JOIN employees
+        ON employees.emp_id = salaries.emp_id
+        INNER JOIN titles
+        ON titles.emp_id = employees.emp_id
+        WHERE employees.gender = 'M' AND titles.title = 'Technique Leader'
+        UNION ALL
+        SELECT AVG(salary) as avg_salary, employees.gender
+        FROM salaries
+        INNER JOIN employees
+        ON employees.emp_id = salaries.emp_id
+        INNER JOIN titles
+        ON titles.emp_id = employees.emp_id
+        WHERE employees.gender = 'F' AND titles.title = 'Technique Leader' limit 100`);
+                createTable(contents2[0], 'res2')
+            };
+            xhr.send();
+        }
+        
+        function query3() {
+            const xhr = new XMLHttpRequest();xhr.open('GET', '/employees.db', true);
+            xhr.responseType = 'arraybuffer';
+            xhr.onload = e => {
+            const uInt8Array = new Uint8Array(xhr.response);
+            const db = new SQL.Database(uInt8Array);
+                const contents3 = db.exec(`SELECT COUNT(emp_id)
+        FROM salaries
+        WHERE to_date = '9999-01-01' AND salary >= 90000 and salary <= 90040 limit 100`);
+                createTable(contents3[0], 'res3')
+            };
+            xhr.send();
+        }
+        function query4() {
+            const xhr = new XMLHttpRequest();xhr.open('GET', '/employees.db', true);
+            xhr.responseType = 'arraybuffer';
+            xhr.onload = e => {
+            const uInt8Array = new Uint8Array(xhr.response);
+            const db = new SQL.Database(uInt8Array);
+            const contents4 = db.exec(`SELECT employees.last_name, employees.first_name, salaries.salary
+        FROM employees
+        INNER JOIN salaries
+        on employees.emp_id = salaries.emp_id
+        WHERE salaries.to_date = '9999-01-01' AND salaries.salary >= 90000
+        GROUP BY employees.last_name, employees.first_name, salaries.salary
+        ORDER BY employees.last_name DESC, employees.first_name DESC limit 100`);
+            createTable(contents4[0], 'res4')
+            };
+            xhr.send();
+        }
+        function query5() {
+            const xhr = new XMLHttpRequest();xhr.open('GET', '/employees.db', true);
+            xhr.responseType = 'arraybuffer';
+            xhr.onload = e => {
+            const uInt8Array = new Uint8Array(xhr.response);
+            const db = new SQL.Database(uInt8Array);
+            const contents5 = db.exec(`SELECT employees.last_name, employees.first_name, salaries.from_date,
+        salaries.to_date ,salaries.salary
+        FROM employees
+        INNER JOIN salaries
+        on employees.emp_id = salaries.emp_id
+        WHERE employees.emp_id = 10012 limit 100`);
+            createTable(contents5[0], 'res5')
+            };
+            xhr.send();
+        }
+        
+        
+        function createTable(Contents, div) {
+            var myTableDiv = document.getElementById(div);
+            var table = document.createElement('TABLE');
+            var tableBody = document.createElement('TBODY');
+            table.border = '1';
+            table.appendChild(tableBody);
+        
+            var tr = document.createElement('TR');
+            tableBody.appendChild(tr);
+        
+            Contents['columns'].forEach(element => {
+                var th = document.createElement('TH')
+                th.width = '100';
+                th.appendChild(document.createTextNode(element));
+                tr.appendChild(th);
+           });
+        
+           Contents['values'].forEach(element => {
+            var tr = document.createElement('TR');
+            element.forEach(e => {
+                var td = document.createElement('TD')
+                td.appendChild(document.createTextNode(e));
+                tr.appendChild(td)
+            });
+            tableBody.appendChild(tr);
+           });
+        
+            myTableDiv.appendChild(table);
+        }
+          </script>
+          </main>
+          <footer>
+            <!-- place footer here -->
+          </footer>
+          <!-- Bootstrap JavaScript Libraries -->
+          <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"
+            integrity="sha384-oBqDVmMz9ATKxIep9tiCxS/Z9fNfEXiDAYTujMAeBAsjFuCZSmKbSSUnQlmh/jp3" crossorigin="anonymous">
+          </script>
+        
+          <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.1/dist/js/bootstrap.min.js"
+            integrity="sha384-7VPbUDkoPSGFnVtYi0QogXtr74QeVeeIs99Qfg5YCF+TidwNdjvaKZX19NZ/e6oz" crossorigin="anonymous">
+          </script>
+        </body>
+        
+        </html>
